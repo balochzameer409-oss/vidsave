@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VidSave - Free Video Downloader</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    min-height: 100vh;
+    color: white;
+  }
+
+  header {
+    text-align: center;
+    padding: 40px 20px 10px;
+  }
+
+  header .logo {
+    font-size: 2.2rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, #f953c6, #b91d73);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -1px;
+  }
+
+  header .logo span { color: white; -webkit-text-fill-color: white; }
+  header p { color: #aaa; margin-top: 6px; font-size: 0.95rem; }
+
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 24px 16px 0;
+  }
+
+  .tab {
+    flex: 1;
+    max-width: 160px;
+    padding: 11px 10px;
+    border-radius: 50px;
+    border: 2px solid rgba(255,255,255,0.15);
+    background: transparent;
+    color: #ccc;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.3s;
+  }
+
+  .tab.active {
+    background: linear-gradient(90deg, #f953c6, #b91d73);
+    border-color: transparent;
+    color: white;
+  }
+
+  .card {
+    max-width: 640px;
+    margin: 20px 16px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 22px;
+    padding: 22px 18px;
+    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(12px);
+  }
+
+  @media (min-width: 680px) { .card { margin: 20px auto; padding: 32px; } }
+
+  .platform-label {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #eee;
+  }
+
+  .badge {
+    display: inline-block;
+    background: rgba(249,83,198,0.15);
+    border: 1px solid rgba(249,83,198,0.3);
+    color: #f953c6;
+    font-size: 0.72rem;
+    padding: 3px 10px;
+    border-radius: 50px;
+    margin-bottom: 16px;
+  }
+
+  .input-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  @media (min-width: 500px) {
+    .input-wrap { flex-direction: row; }
+    .input-wrap button { width: auto; flex-shrink: 0; }
+  }
+
+  .input-wrap input {
+    flex: 1;
+    padding: 15px 16px;
+    border-radius: 12px;
+    border: 1.5px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.08);
+    color: white;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border 0.3s;
+  }
+
+  .input-wrap input::placeholder { color: #666; }
+  .input-wrap input:focus { border-color: #f953c6; }
+
+  .input-wrap button {
+    width: 100%;
+    padding: 15px 22px;
+    border-radius: 12px;
+    background: linear-gradient(90deg, #f953c6, #b91d73);
+    border: none;
+    color: white;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.3s;
+  }
+
+  .input-wrap button:hover { opacity: 0.85; }
+
+  .options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .opt {
+    padding: 7px 16px;
+    border-radius: 50px;
+    border: 1.5px solid rgba(255,255,255,0.2);
+    background: transparent;
+    color: #ccc;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+
+  .opt.active, .opt:hover {
+    background: rgba(249,83,198,0.2);
+    border-color: #f953c6;
+    color: white;
+  }
+
+  .err {
+    color: #ff6b6b;
+    font-size: 0.85rem;
+    margin-top: 10px;
+    display: none;
+  }
+
+  .loading { display: none; text-align: center; padding: 24px 0 8px; }
+  .loading.show { display: block; }
+
+  .spinner {
+    width: 38px;
+    height: 38px;
+    border: 3px solid rgba(249,83,198,0.25);
+    border-top-color: #f953c6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 10px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading p { color: #aaa; font-size: 0.9rem; }
+
+  .result { display: none; background: rgba(0,0,0,0.25); border-radius: 14px; padding: 18px; margin-top: 14px; text-align: center; }
+  .result.show { display: block; }
+  .result h3 { font-size: 1rem; margin-bottom: 14px; color: #ccc; }
+
+  .dl-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border-radius: 50px;
+    border: none;
+    color: white;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: opacity 0.3s;
+  }
+
+  .dl-btn:hover { opacity: 0.85; }
+  .dl-btn.green { background: linear-gradient(90deg, #11998e, #38ef7d); }
+  .dl-btn.purple { background: linear-gradient(90deg, #667eea, #764ba2); }
+
+  .howto {
+    max-width: 640px;
+    margin: 10px 16px 50px;
+    text-align: center;
+  }
+
+  @media (min-width: 680px) { .howto { margin: 10px auto 60px; } }
+
+  .howto h2 { font-size: 1.2rem; color: #bbb; margin-bottom: 18px; font-weight: 600; }
+
+  .steps {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  @media (min-width: 500px) { .steps { grid-template-columns: repeat(4, 1fr); } }
+
+  .step {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 18px 12px;
+  }
+
+  .step .icon { font-size: 1.8rem; margin-bottom: 8px; }
+  .step p { font-size: 0.78rem; color: #aaa; line-height: 1.4; }
+
+  footer { text-align: center; padding: 16px; color: #444; font-size: 0.8rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Vid<span>Save</span></div>
+  <p>Download TikTok & Instagram videos — no watermark, totally free!</p>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('tiktok', this)">🎵 TikTok</button>
+  <button class="tab" onclick="switchTab('instagram', this)">📸 Instagram</button>
+</div>
+
+<div class="card" id="tiktok-card">
+  <div class="badge">✨ No Watermark</div>
+  <div class="platform-label">🎵 Download TikTok Video</div>
+  <div class="input-wrap">
+    <input type="url" id="tiktok-url" placeholder="Paste TikTok link here..." />
+    <button onclick="fetchVideo('tiktok')">Download</button>
+  </div>
+  <div class="options">
+    <button class="opt active" onclick="selectOpt(this)">No Watermark</button>
+    <button class="opt" onclick="selectOpt(this)">MP3 Audio</button>
+    <button class="opt" onclick="selectOpt(this)">HD Quality</button>
+  </div>
+  <div class="err" id="tiktok-error">⚠️ Please enter a valid TikTok link!</div>
+  <div class="loading" id="tiktok-loading">
+    <div class="spinner"></div>
+    <p>Fetching your video...</p>
+  </div>
+  <div class="result" id="tiktok-result">
+    <h3>✅ Video found! Choose your format:</h3>
+    <button class="dl-btn green" onclick="alert('Backend needed — coming soon!')">⬇️ Download Video (No Watermark)</button>
+    <button class="dl-btn purple" onclick="alert('Backend needed — coming soon!')">🎵 Download MP3</button>
+  </div>
+</div>
+
+<div class="card" id="instagram-card" style="display:none">
+  <div class="badge">✨ HD Quality</div>
+  <div class="platform-label">📸 Download Instagram Video</div>
+  <div class="input-wrap">
+    <input type="url" id="instagram-url" placeholder="Paste Instagram link here..." />
+    <button onclick="fetchVideo('instagram')">Download</button>
+  </div>
+  <div class="options">
+    <button class="opt active" onclick="selectOpt(this)">Video</button>
+    <button class="opt" onclick="selectOpt(this)">Photo</button>
+    <button class="opt" onclick="selectOpt(this)">Reels</button>
+    <button class="opt" onclick="selectOpt(this)">Stories</button>
+  </div>
+  <div class="err" id="instagram-error">⚠️ Please enter a valid Instagram link!</div>
+  <div class="loading" id="instagram-loading">
+    <div class="spinner"></div>
+    <p>Fetching your video...</p>
+  </div>
+  <div class="result" id="instagram-result">
+    <h3>✅ Video found! Choose your format:</h3>
+    <button class="dl-btn green" onclick="alert('Backend needed — coming soon!')">⬇️ Download Video</button>
+    <button class="dl-btn purple" onclick="alert('Backend needed — coming soon!')">🖼️ Download Photo</button>
+  </div>
+</div>
+
+<div class="howto">
+  <h2>How to use?</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="icon">📋</div>
+      <p>Copy the video link from TikTok or Instagram</p>
+    </div>
+    <div class="step">
+      <div class="icon">📥</div>
+      <p>Paste the link in the box above</p>
+    </div>
+    <div class="step">
+      <div class="icon">⚡</div>
+      <p>Click the Download button</p>
+    </div>
+    <div class="step">
+      <div class="icon">✅</div>
+      <p>Save your video — done!</p>
+    </div>
+  </div>
+</div>
+
+<footer>© 2026 VidSave — For personal use only</footer>
+
+<script>
+function switchTab(platform, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tiktok-card').style.display = platform === 'tiktok' ? 'block' : 'none';
+  document.getElementById('instagram-card').style.display = platform === 'instagram' ? 'block' : 'none';
+}
+
+function selectOpt(btn) {
+  btn.closest('.options').querySelectorAll('.opt').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function fetchVideo(platform) {
+  const url = document.getElementById(platform + '-url').value.trim();
+  const err = document.getElementById(platform + '-error');
+  const loading = document.getElementById(platform + '-loading');
+  const result = document.getElementById(platform + '-result');
+
+  err.style.display = 'none';
+  result.classList.remove('show');
+
+  if (!url) { err.style.display = 'block'; return; }
+  if (platform === 'tiktok' && !url.includes('tiktok.com')) { err.style.display = 'block'; return; }
+  if (platform === 'instagram' && !url.includes('instagram.com')) { err.style.display = 'block'; return; }
+
+  loading.classList.add('show');
+
+  try {
+    const response = await fetch('https://projectzb.pythonanywhere.com/download', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: url, platform: platform })
+    });
+
+    const data = await response.json();
+    loading.classList.remove('show');
+
+    if (data.error) {
+      err.textContent = '⚠️ ' + data.error;
+      err.style.display = 'block';
+      return;
+    }
+
+    // Update download buttons with real URL
+    const resultDiv = document.getElementById(platform + '-result');
+    resultDiv.querySelector('h3').textContent = '✅ ' + (data.title || 'Video found!');
+    
+    const btns = resultDiv.querySelectorAll('.dl-btn');
+    btns[0].onclick = () => window.open(data.url, '_blank');
+    
+    result.classList.add('show');
+
+  } catch(e) {
+    loading.classList.remove('show');
+    err.textContent = '⚠️ Something went wrong. Try again!';
+    err.style.display = 'block';
+  }
+}
+</script>
+</body>
+</html>
